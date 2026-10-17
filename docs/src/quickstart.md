@@ -52,9 +52,11 @@ docker compose down
 声の種類やポートを変えたいときは、`.env` を作って書きます。何も書かなければ既定値で動きます。
 
 ```bash
-cp .env.example .env
+vim .env
 ```
-
+```bash
+#VV_TOKEN=
+```
 書ける項目は [設定](configuration.md) を見てください。
 
 ## ログを見る
