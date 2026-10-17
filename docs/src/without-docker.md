@@ -10,7 +10,7 @@ wrapper をホストの Python で直接動かす方法です。VOICEVOX エン�
 
 ## 起動
 
-合言葉と証明書の作り方は [クイックスタート](quickstart.md) の 2・3 と同じです。
+証明書の作り方は [クイックスタート](quickstart.md) の 2 と同じです。
 
 ```bash
 ./run.sh

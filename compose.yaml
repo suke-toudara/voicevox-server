@@ -7,7 +7,9 @@ services:
     build: .
     depends_on:
       - voicevox
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       VV_ENGINE: http://voicevox:50021
       VV_PORT: "8443"  # inside the container; the host port is set under ports

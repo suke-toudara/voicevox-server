@@ -6,10 +6,9 @@ cd "$(dirname "$0")"
 ENGINE_IMAGE="${VV_ENGINE_IMAGE:-voicevox/voicevox_engine:cpu-latest}"
 CONTAINER=voicevox-engine
 
-[ -f .env ] || { echo ".env がありません。cp .env.example .env してトークンを設定してください" >&2; exit 1; }
 [ -f certs/server.crt ] || ./gen-cert.sh
 
-set -a; . ./.env; set +a
+if [ -f .env ]; then set -a; . ./.env; set +a; fi
 
 cleanup() {
   echo "stopping engine..."

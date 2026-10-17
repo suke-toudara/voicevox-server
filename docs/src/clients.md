@@ -9,10 +9,9 @@ import requests
 
 requests.post(
     "https://192.168.0.10:8443/speak",
-    headers={"Authorization": "Bearer <TOKEN>"},
     json={"text": "処理が終わりました", "speaker": 3},
     verify=False,  # 自己署名なので確認を省く。証明書を渡すなら verify="server.crt"
-    timeout=5,
+    timeout=60,  # 読み上げが終わるまで返事が来ないので長めに
 )
 ```
 
@@ -28,10 +27,10 @@ ctx.verify_mode = ssl.CERT_NONE
 req = urllib.request.Request(
     "https://192.168.0.10:8443/speak",
     data=json.dumps({"text": "処理が終わりました"}).encode(),
-    headers={"Authorization": "Bearer <TOKEN>", "Content-Type": "application/json"},
+    headers={"Content-Type": "application/json"},
     method="POST",
 )
-urllib.request.urlopen(req, context=ctx, timeout=5)
+urllib.request.urlopen(req, context=ctx, timeout=60)
 ```
 
 ## JavaScript（Node.js）
@@ -41,12 +40,19 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // 自己署名なので確認�
 
 await fetch("https://192.168.0.10:8443/speak", {
   method: "POST",
-  headers: {
-    "Authorization": "Bearer <TOKEN>",
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ text: "処理が終わりました" }),
 });
+```
+
+## 待たずに次へ進みたいとき
+
+返事は読み上げが終わってから来ます。待たずに処理を続けたいときは `"wait": false` を付けます。
+
+```bash
+curl -k -X POST https://192.168.0.10:8443/speak \
+  -H "Content-Type: application/json" \
+  -d '{"text":"処理を開始します","wait":false}'
 ```
 
 ## シェル：コマンドが終わったら知らせる
@@ -54,7 +60,6 @@ await fetch("https://192.168.0.10:8443/speak", {
 ```bash
 say() {
   curl -sk -X POST https://192.168.0.10:8443/speak \
-    -H "Authorization: Bearer $VV_TOKEN" \
     -H "Content-Type: text/plain" --data-binary "$1" >/dev/null
 }
 

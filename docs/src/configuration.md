@@ -1,13 +1,14 @@
 # 設定
 
-設定は `.env` ファイルに書きます。見本は `.env.example` です。
+設定は `.env` ファイルに書きます。見本は `.env.example` です。`.env` が無ければ、すべて既定値で動きます。
 
 | 変数 | 既定値 | 内容 |
 |---|---|---|
-| `VV_TOKEN` | （空 = 認証なし） | クライアント用の合言葉。必ず設定してください |
+| `VV_TOKEN` | （空 = 認証なし） | 合言葉。設定すると `Authorization` ヘッダが必要になる（[認証](api.md#認証オプション)） |
 | `VV_PORT` | `8443` | 待ち受けポート |
 | `VV_SPEAKER` | `3`（ずんだもん ノーマル） | `speaker` を省略したときの声 |
 | `VV_PLAYER` | `pw-play`（Docker では `paplay`） | 再生コマンド |
+| `VV_WAIT_TIMEOUT` | `300` | 読み上げの終わりを待つ最大秒数。超えると `504` を返す |
 | `VV_HOST` | `0.0.0.0` | 待ち受けアドレス |
 | `VV_CERT` / `VV_KEY` | `certs/server.crt` / `certs/server.key` | 証明書と秘密鍵。無ければ HTTP で起動します |
 | `VV_ENGINE` | `http://127.0.0.1:50021` | VOICEVOX エンジンの URL |

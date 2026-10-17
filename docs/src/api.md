@@ -2,25 +2,37 @@
 
 ベース URL: `https://<host>:8443`
 
-| メソッド | パス | 認証 | 内容 |
-|---|---|---|---|
-| `POST` | `/speak` | 必要 | テキストをしゃべらせる |
-| `GET` | `/speakers` | 必要 | 話者とスタイル ID の一覧 |
-| `GET` | `/health` | 不要 | wrapper とエンジンの稼働確認 |
+| メソッド | パス | 内容 |
+|---|---|---|
+| `POST` | `/speak` | テキストをしゃべらせる |
+| `GET` | `/speakers` | 話者とスタイル ID の一覧 |
+| `GET` | `/health` | wrapper とエンジンの稼働確認 |
 
-## 認証
+## 認証（オプション）
 
-`Authorization` ヘッダに合言葉（トークン）を付けます。
+既定では認証なしで、誰でも呼べます。
 
-```text
-Authorization: Bearer <VV_TOKEN の値>
+同じネットワークに知らない人がいて、勝手にしゃべらされたくない場合は、`.env` に合言葉を設定します。
+
+```bash
+# .env
+VV_TOKEN=好きな合言葉
 ```
 
-URL に合言葉を含める方法（`?token=`）には対応していません。URL はブラウザの履歴やサーバーのログに残りやすいためです。
+設定すると、`/speak` と `/speakers` を呼ぶときに `Authorization` ヘッダが必要になります（`/health` は不要のまま）。
+
+```bash
+curl -k -X POST https://localhost:8443/speak \
+  -H "Authorization: Bearer 好きな合言葉" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"こんにちは"}'
+```
 
 ## POST /speak
 
-テキストを再生キューに入れます。再生の終わりは待たずに、すぐ返事を返します。
+テキストをしゃべらせます。標準では **読み上げが終わってから** 返事を返します。
+
+続けて送られた場合は順番待ちの列に入り、1 つずつ再生されます。前の読み上げが残っていると、その分も待つことになります。
 
 ### パラメータ
 
@@ -32,6 +44,7 @@ URL に合言葉を含める方法（`?token=`）には対応していません�
 | `pitch` | 数値 | | 0.0 | 声の高さ |
 | `intonation` | 数値 | | 1.0 | 抑揚の強さ |
 | `volume` | 数値 | | 1.0 | 音量 |
+| `wait` | 真偽値 | | `true` | `false` にすると、読み上げを待たずにすぐ返事を返す |
 
 ### 送り方
 
@@ -41,7 +54,6 @@ URL に合言葉を含める方法（`?token=`）には対応していません�
 
 ```bash
 curl -k -X POST https://localhost:8443/speak \
-  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは","speaker":3,"speed":1.2}'
 ```
@@ -50,7 +62,6 @@ curl -k -X POST https://localhost:8443/speak \
 
 ```bash
 curl -k -X POST https://localhost:8443/speak \
-  -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "text=こんにちは" -d "speaker=3"
 ```
 
@@ -58,7 +69,6 @@ curl -k -X POST https://localhost:8443/speak \
 
 ```bash
 curl -k -X POST https://localhost:8443/speak \
-  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: text/plain" \
   --data-binary "こんにちは"
 ```
@@ -67,23 +77,34 @@ curl -k -X POST https://localhost:8443/speak \
 
 ### レスポンス
 
+読み上げが終わったとき:
+
+```json
+{"status": "spoken", "text": "こんにちは", "speaker": 3}
+```
+
+`"wait": false` のとき（列に並べた時点で返す）:
+
 ```json
 {"status": "queued", "queue": 1, "text": "こんにちは", "speaker": 3}
 ```
 
 | ステータス | 意味 |
 |---|---|
-| `202` | 受け付けた。少しあとに再生される |
+| `200` | 読み上げが終わった |
+| `202` | 受け付けた（`"wait": false` のとき）。少しあとに再生される |
 | `400` | `text` が空、長すぎる、数値の項目が数値でない、本文が壊れている |
-| `401` | 合言葉が違う、または付いていない |
+| `401` | 合言葉が違う、または付いていない（`VV_TOKEN` を設定したときだけ） |
 | `404` | パスが違う |
 | `405` | `GET /speak` が呼ばれた（`POST` を使ってください） |
+| `502` | 音声の生成か再生に失敗した（`"wait": false` のときは返らない） |
 | `503` | キューがいっぱい（50 件） |
+| `504` | `VV_WAIT_TIMEOUT` 秒待っても終わらなかった。読み上げ自体は列に残っていて、あとで再生される |
 
 ## GET /speakers
 
 ```bash
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:8443/speakers
+curl -k https://localhost:8443/speakers
 ```
 
 ```json

@@ -22,6 +22,7 @@ KEY = os.environ.get("VV_KEY", os.path.join(BASE_DIR, "certs", "server.key"))
 DEFAULT_SPEAKER = int(os.environ.get("VV_SPEAKER", "3"))  # 3 = ずんだもん(ノーマル)
 PLAYER = os.environ.get("VV_PLAYER", "pw-play").split()
 MAX_TEXT = 1000
+WAIT_TIMEOUT = float(os.environ.get("VV_WAIT_TIMEOUT", "300"))
 
 jobs: "queue.Queue[dict]" = queue.Queue(maxsize=50)
 
@@ -49,16 +50,21 @@ def synthesize(job):
 
 def worker():
     while True:
-        job = jobs.get()
+        task = jobs.get()
+        job = task["job"]
         try:
             wav = synthesize(job)
             with tempfile.NamedTemporaryFile(suffix=".wav") as f:
                 f.write(wav)
                 f.flush()
-                subprocess.run(PLAYER + [f.name], check=False)
+                rc = subprocess.run(PLAYER + [f.name], check=False).returncode
+            if rc != 0:
+                raise RuntimeError(f"{PLAYER[0]} exited with {rc}")
         except Exception as e:  # keep the worker alive whatever happens
+            task["error"] = str(e)
             print(f"[error] {e!r} text={job['text'][:40]!r}", flush=True)
         finally:
+            task["done"].set()
             jobs.task_done()
 
 
@@ -93,13 +99,21 @@ class Handler(BaseHTTPRequestHandler):
             for k in ("speed", "pitch", "intonation", "volume"):
                 if params.get(k) is not None:
                     job[k] = float(params[k])
-        except ValueError:
+        except (ValueError, TypeError):
             return self._send(400, {"error": "speaker/speed/pitch/intonation/volume must be numbers"})
+        wait = str(params.get("wait", True)).lower() not in ("false", "0", "no")
+        task = {"job": job, "done": threading.Event(), "error": None}
         try:
-            jobs.put_nowait(job)
+            jobs.put_nowait(task)
         except queue.Full:
             return self._send(503, {"error": "queue is full"})
-        self._send(202, {"status": "queued", "queue": jobs.qsize(), **job})
+        if not wait:
+            return self._send(202, {"status": "queued", "queue": jobs.qsize(), **job})
+        if not task["done"].wait(WAIT_TIMEOUT):
+            return self._send(504, {"status": "timeout", "error": "still queued or playing", **job})
+        if task["error"]:
+            return self._send(502, {"status": "failed", "error": task["error"], **job})
+        self._send(200, {"status": "spoken", **job})
 
     def do_GET(self):
         path = self._path()

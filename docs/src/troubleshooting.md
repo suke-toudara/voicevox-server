@@ -25,9 +25,11 @@ docker compose exec wrapper pactl info
 
 ## 401 unauthorized
 
+`.env` で `VV_TOKEN`（合言葉）を設定しているときだけ出ます。
+
 - `Authorization: Bearer <合言葉>` ヘッダが付いているか確認します
 - 合言葉が `.env` の `VV_TOKEN` と同じか確認します
-- `.env` を変えたあとに起動し直したか確認します
+- 合言葉が不要なら、`.env` から `VV_TOKEN` の行を消して起動し直します
 
 ## 405 use POST /speak
 

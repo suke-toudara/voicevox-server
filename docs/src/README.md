@@ -4,7 +4,6 @@
 
 ```bash
 curl -k -X POST https://<host>:8443/speak \
-  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは"}'
 ```
@@ -14,7 +13,7 @@ curl -k -X POST https://<host>:8443/speak \
 ## しくみ
 
 ```text
-クライアント ──HTTPS(8443, トークン認証)──▶ wrapper ──▶ VOICEVOX エンジン
+クライアント ──HTTPS(8443)──▶ wrapper ──▶ VOICEVOX エンジン
                                               │
                                               └──▶ PipeWire / PulseAudio ──▶ スピーカー
 ```
@@ -22,7 +21,6 @@ curl -k -X POST https://<host>:8443/speak \
 - **wrapper**: テキストを受け取り、エンジンで音声を作って再生します。Python 標準ライブラリだけで書かれています
 - **VOICEVOX エンジン**: テキストから音声（WAV）を作ります。外からは直接触れず、wrapper からしか使えません
 - **キュー**: 続けて送られても声が重ならないよう、1 つずつ順番に再生します
-- **トークン**: 合言葉です。知らない人に勝手にしゃべらされないようにします
 
 ## 使いどころ
 
