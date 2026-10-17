@@ -1,0 +1,8 @@
+[book]
+title = "voicevox-https-wrapper"
+authors = ["suke-toudara"]
+language = "ja"
+src = "src"
+
+[output.html]
+git-repository-url = "https://github.com/suke-toudara/voicevox-https-wrapper"

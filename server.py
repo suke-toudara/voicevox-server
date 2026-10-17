@@ -73,17 +73,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _authorized(self, params):
+    def _authorized(self):
         if not TOKEN:
             return True
         auth = self.headers.get("Authorization", "")
-        given = auth[7:] if auth.startswith("Bearer ") else params.get("token", "")
-        return hmac.compare_digest(given, TOKEN)
+        return auth.startswith("Bearer ") and hmac.compare_digest(auth[7:].encode(), TOKEN.encode())
 
-    def _params(self):
-        parsed = urllib.parse.urlparse(self.path)
-        params = {k: v[0] for k, v in urllib.parse.parse_qs(parsed.query).items()}
-        return parsed.path, params
+    def _path(self):
+        return urllib.parse.urlparse(self.path).path
 
     def _enqueue(self, params):
         text = str(params.get("text", "")).strip()
@@ -105,14 +102,14 @@ class Handler(BaseHTTPRequestHandler):
         self._send(202, {"status": "queued", "queue": jobs.qsize(), **job})
 
     def do_GET(self):
-        path, params = self._params()
+        path = self._path()
         if path == "/health":
             try:
                 version = engine_request("/version").decode().strip('"')
                 return self._send(200, {"status": "ok", "engine": version, "queue": jobs.qsize()})
             except Exception as e:
                 return self._send(503, {"status": "engine unreachable", "error": str(e)})
-        if not self._authorized(params):
+        if not self._authorized():
             return self._send(401, {"error": "unauthorized"})
         if path == "/speakers":
             speakers = json.loads(engine_request("/speakers"))
@@ -120,12 +117,12 @@ class Handler(BaseHTTPRequestHandler):
                                      "styles": [{"id": st["id"], "name": st["name"]} for st in s["styles"]]}
                                     for s in speakers])
         if path == "/speak":
-            return self._enqueue(params)
+            return self._send(405, {"error": "use POST /speak"})
         self._send(404, {"error": "not found"})
 
     def do_POST(self):
-        path, params = self._params()
-        if not self._authorized(params):
+        path, params = self._path(), {}
+        if not self._authorized():
             return self._send(401, {"error": "unauthorized"})
         if path != "/speak":
             return self._send(404, {"error": "not found"})
@@ -134,7 +131,10 @@ class Handler(BaseHTTPRequestHandler):
         ctype = self.headers.get("Content-Type", "")
         try:
             if "json" in ctype:
-                params.update(json.loads(raw or b"{}"))
+                body = json.loads(raw or b"{}")
+                if not isinstance(body, dict):
+                    raise ValueError("JSON body must be an object")
+                params.update(body)
             elif "form" in ctype:
                 params.update({k: v[0] for k, v in urllib.parse.parse_qs(raw.decode()).items()})
             elif raw:
