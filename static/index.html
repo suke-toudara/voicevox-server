@@ -96,6 +96,7 @@
 
   <section class="card">
     <h2>声</h2>
+    <p class="hint waiting">サーバーに接続すると表示されます</p>
     <div class="grid2">
       <div><label class="field" for="character">キャラクター</label><select id="character"></select></div>
       <div><label class="field" for="style">話し方</label><select id="style"></select></div>
@@ -104,12 +105,12 @@
 
   <section class="card">
     <h2>調整</h2>
-    <div id="voiceSliders"></div>
+    <div id="voiceSliders"><p class="hint waiting">サーバーに接続すると表示されます</p></div>
   </section>
 
   <section class="card">
     <h2>その他</h2>
-    <div class="grid2" id="behaviour"></div>
+    <div class="grid2" id="behaviour"><p class="hint waiting">サーバーに接続すると表示されます</p></div>
   </section>
 
   <div class="savebar">
@@ -280,6 +281,7 @@ async function init() {
     const [sp, st] = await Promise.all([api("GET", "/speakers"), api("GET", "/settings")]);
     speakers = sp; limits = st.limits; saved = st.settings;
     fillCharacters(); buildSliders(); applyToForm(saved); markDirty();
+    document.querySelectorAll(".waiting").forEach((el) => el.remove());
   } catch (e) {
     setMsg($("saveMsg"), "読み込めませんでした: " + e.message, "err");
   }
