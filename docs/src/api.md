@@ -128,9 +128,3 @@ curl http://localhost:8080/health
 |---|---|
 | `200` | `{"status": "ok", "engine": "0.25.2", "queue": 0}` |
 | `503` | `{"status": "engine unreachable", "error": "..."}` |
-
-## REST API との関係
-
-この API は「REST 風」の Web API です。データを JSON でやりとりし、結果を HTTP のステータスコードで返し、GET は「見るだけ」、POST は「何かを起こす」に使い分けています。
-
-`/speak` は動詞なので、厳密な REST のお作法（URL は名詞にする）からは少し外れています。「しゃべって」という命令が名前から分かるほうが使いやすいので、あえてこの名前にしています。
