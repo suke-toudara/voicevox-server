@@ -1,8 +1,8 @@
-# voicevox-https-wrapper
+# voicevox-server
 
 HTTP でテキストを受け取り、このマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) でしゃべらせるラッパー。
 
-📖 **ドキュメント: https://suke-toudara.github.io/voicevox-https-wrapper/**
+📖 **ドキュメント: https://suke-toudara.github.io/voicevox-server/**
 
 ```
 クライアント ──HTTP(8080)──▶ wrapper ──▶ VOICEVOX エンジン
@@ -35,7 +35,7 @@ curl -X POST http://localhost:8080/speak \
 
 声は名前でも指定できる: `{"text":"こんにちは","speaker":"四国めたん/あまあま"}`
 
-設定は `.env.example` を `.env` にコピーして書く（無くても動く）。詳しくは[ドキュメント](https://suke-toudara.github.io/voicevox-https-wrapper/)を参照。
+設定は `.env.example` を `.env` にコピーして書く（無くても動く）。詳しくは[ドキュメント](https://suke-toudara.github.io/voicevox-server/)を参照。
 
 ## ドキュメントをローカルで見る
 

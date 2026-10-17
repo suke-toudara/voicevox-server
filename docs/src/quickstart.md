@@ -10,8 +10,8 @@
 ## 1. 取ってくる
 
 ```bash
-git clone https://github.com/suke-toudara/voicevox-https-wrapper.git
-cd voicevox-https-wrapper
+git clone https://github.com/suke-toudara/voicevox-server.git
+cd voicevox-server
 ```
 
 ## 2. 起動する

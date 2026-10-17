@@ -1,6 +1,6 @@
 # はじめに
 
-**voicevox-https-wrapper** は、HTTP で送られてきたテキストを、サーバーを動かしているマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) の声で読み上げるラッパーです。
+**voicevox-server** は、HTTP で送られてきたテキストを、サーバーを動かしているマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) の声で読み上げるサーバーです。
 
 ```bash
 curl -X POST http://<host>:8080/speak \

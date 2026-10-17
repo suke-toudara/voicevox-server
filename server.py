@@ -205,7 +205,7 @@ def worker():
 # ---------- HTTP ----------
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "voicevox-wrapper"
+    server_version = "voicevox-server"
 
     def _send(self, code, obj):
         body = json.dumps(obj, ensure_ascii=False).encode()
