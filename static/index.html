@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOICEVOX Speaker</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #667085; --line: #e3e6eb;
+    --accent: #2f7d5b; --accent-text: #ffffff; --accent-soft: #e5f2ec;
+    --danger: #b42318; --warn: #b54708; --ok: #2f7d5b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --card: #1b1f27; --text: #e7eaf0; --muted: #98a2b3; --line: #2c323d;
+      --accent: #4fb889; --accent-text: #0d1a14; --accent-soft: #1e3329;
+      --danger: #f97066; --warn: #fdb022; --ok: #4fb889;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; white-space: nowrap; }
+  h2 { font-size: 15px; margin: 0 0 14px; color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+  .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .dot.ok { background: var(--ok); } .dot.ng { background: var(--danger); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  textarea, select, input[type=number], input[type=password] {
+    width: 100%; font: inherit; color: inherit; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  button {
+    font: inherit; border-radius: 8px; padding: 9px 16px; cursor: pointer; white-space: nowrap;
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.link { border: 0; background: none; color: var(--muted); padding: 2px 6px; font-size: 12px; }
+  .slider { display: grid; grid-template-columns: 150px 1fr 64px 44px; gap: 10px; align-items: center; padding: 6px 0; }
+  .slider .name { font-size: 14px; }
+  .slider input[type=range] { width: 100%; accent-color: var(--accent); }
+  .slider output { text-align: right; font-variant-numeric: tabular-nums; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .msg { font-size: 13px; min-height: 1.6em; margin-top: 8px; }
+  .msg.ok { color: var(--ok); } .msg.err { color: var(--danger); } .msg.busy { color: var(--muted); }
+  .savebar {
+    position: sticky; bottom: 12px; display: flex; gap: 10px; align-items: center; justify-content: flex-end;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  }
+  .savebar .dirty { margin-right: auto; font-size: 13px; color: var(--warn); }
+  #auth { display: none; }
+  @media (max-width: 560px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .slider { grid-template-columns: 1fr 56px 40px; }
+    .slider .name { grid-column: 1 / -1; }
+    h1 { font-size: 19px; }
+    .savebar { flex-wrap: wrap; }
+    .savebar .dirty { flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>VOICEVOX Speaker</h1>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">確認中…</span></div>
+  </header>
+
+  <section class="card" id="auth">
+    <h2>合言葉</h2>
+    <div class="row">
+      <input type="password" id="token" placeholder="VV_TOKEN の値" style="flex:1">
+      <button id="tokenBtn">保存</button>
+    </div>
+    <p class="hint">このサーバーは合言葉が設定されています。入力した合言葉はこのブラウザに保存されます。</p>
+  </section>
+
+  <section class="card">
+    <h2>しゃべらせる</h2>
+    <textarea id="text" placeholder="しゃべらせたい文を入力（Ctrl + Enter でも送れます）">こんにちは。今日もよろしくお願いします。</textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="speakBtn">しゃべらせる</button>
+      <span class="hint">下の声と調整（保存前でも）で読み上げます</span>
+    </div>
+    <div class="msg" id="speakMsg"></div>
+  </section>
+
+  <section class="card">
+    <h2>声</h2>
+    <div class="grid2">
+      <div><label class="field" for="character">キャラクター</label><select id="character"></select></div>
+      <div><label class="field" for="style">話し方</label><select id="style"></select></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>調整</h2>
+    <div id="voiceSliders"></div>
+  </section>
+
+  <section class="card">
+    <h2>動作</h2>
+    <div class="grid2" id="behaviour"></div>
+  </section>
+
+  <div class="savebar">
+    <span class="dirty" id="dirty"></span>
+    <button id="resetBtn">初期値に戻す</button>
+    <button class="primary" id="saveBtn">保存（いつもの設定にする）</button>
+  </div>
+  <div class="msg" id="saveMsg" style="text-align:right"></div>
+</main>
+
+<script>
+const VOICE_KEYS = ["speed", "pitch", "intonation", "volume", "pre_silence", "post_silence", "pause"];
+const BEHAVIOUR_KEYS = ["wait_timeout", "max_text"];
+const $ = (id) => document.getElementById(id);
+
+let speakers = [];
+let limits = {};
+let saved = {};      // settings as stored on the server
+
+function token() {
+  try { return localStorage.getItem("vv_token") || ""; } catch { return ""; }
+}
+
+async function api(method, path, body) {
+  const headers = {};
+  if (token()) headers["Authorization"] = "Bearer " + token();
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { $("auth").style.display = "block"; }
+  if (!res.ok) {
+    let msg = data.error || res.statusText;
+    if (data.choices) msg += "（候補: " + data.choices.slice(0, 10).join("、") + (data.choices.length > 10 ? " ほか" : "") + "）";
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function setMsg(el, text, kind) { el.textContent = text; el.className = "msg " + (kind || ""); }
+
+// ---------- building the form ----------
+
+function fillCharacters() {
+  $("character").innerHTML = speakers.map((s, i) => `<option value="${i}">${s.name}</option>`).join("");
+}
+
+function fillStyles(selectId) {
+  const s = speakers[$("character").value];
+  $("style").innerHTML = s.styles.map((st) => `<option value="${st.id}">${st.name}</option>`).join("");
+  if (selectId !== undefined) $("style").value = String(selectId);
+}
+
+function selectSpeaker(id) {
+  const idx = speakers.findIndex((s) => s.styles.some((st) => st.id === id));
+  if (idx < 0) return;
+  $("character").value = String(idx);
+  fillStyles(id);
+}
+
+function buildSliders() {
+  $("voiceSliders").innerHTML = VOICE_KEYS.map((k) => {
+    const l = limits[k];
+    return `<div class="slider">
+      <span class="name">${l.label}</span>
+      <input type="range" id="r_${k}" min="${l.min}" max="${l.max}" step="${l.step}">
+      <output id="o_${k}"></output>
+      <button class="link" data-reset="${k}" title="初期値 ${l.default}">戻す</button>
+    </div>`;
+  }).join("");
+  for (const k of VOICE_KEYS) {
+    $("r_" + k).addEventListener("input", () => { showValue(k); markDirty(); });
+  }
+  $("voiceSliders").addEventListener("click", (e) => {
+    const k = e.target.dataset.reset;
+    if (k) { $("r_" + k).value = limits[k].default; showValue(k); markDirty(); }
+  });
+
+  $("behaviour").innerHTML = BEHAVIOUR_KEYS.map((k) => {
+    const l = limits[k];
+    return `<div><label class="field" for="n_${k}">${l.label}</label>
+      <input type="number" id="n_${k}" min="${l.min}" max="${l.max}" step="1">
+      <div class="hint">${l.min}〜${l.max}（初期値 ${l.default}）</div></div>`;
+  }).join("");
+  for (const k of BEHAVIOUR_KEYS) $("n_" + k).addEventListener("input", markDirty);
+}
+
+function showValue(k) {
+  const v = Number($("r_" + k).value);
+  $("o_" + k).textContent = v.toFixed(2);
+}
+
+function applyToForm(s) {
+  selectSpeaker(s.speaker);
+  for (const k of VOICE_KEYS) { $("r_" + k).value = s[k]; showValue(k); }
+  for (const k of BEHAVIOUR_KEYS) $("n_" + k).value = s[k];
+}
+
+function readForm() {
+  const s = { speaker: Number($("style").value) };
+  for (const k of VOICE_KEYS) s[k] = Number($("r_" + k).value);
+  for (const k of BEHAVIOUR_KEYS) s[k] = Number($("n_" + k).value);
+  return s;
+}
+
+function markDirty() {
+  const now = readForm();
+  const changed = Object.keys(now).some((k) => Math.abs(now[k] - saved[k]) > 1e-9);
+  $("dirty").textContent = changed ? "● 保存していない変更があります" : "";
+}
+
+// ---------- actions ----------
+
+async function speak() {
+  const text = $("text").value.trim();
+  if (!text) return setMsg($("speakMsg"), "文を入力してください", "err");
+  const f = readForm();
+  const body = { text, speaker: f.speaker };
+  for (const k of VOICE_KEYS) body[k] = f[k];
+  $("speakBtn").disabled = true;
+  setMsg($("speakMsg"), "読み上げ中…", "busy");
+  try {
+    const r = await api("POST", "/speak", body);
+    setMsg($("speakMsg"), `読み上げました（${r.voice}）`, "ok");
+  } catch (e) {
+    setMsg($("speakMsg"), "失敗: " + e.message, "err");
+  } finally {
+    $("speakBtn").disabled = false;
+  }
+}
+
+async function save() {
+  try {
+    const r = await api("PUT", "/settings", readForm());
+    saved = r.settings; markDirty();
+    setMsg($("saveMsg"), `保存しました（いつもの声: ${r.voice}）`, "ok");
+  } catch (e) {
+    setMsg($("saveMsg"), "保存できませんでした: " + e.message, "err");
+  }
+}
+
+async function reset() {
+  if (!confirm("すべての設定を初期値に戻しますか？")) return;
+  try {
+    const r = await api("DELETE", "/settings");
+    saved = r.settings; applyToForm(saved); markDirty();
+    setMsg($("saveMsg"), "初期値に戻しました", "ok");
+  } catch (e) {
+    setMsg($("saveMsg"), "戻せませんでした: " + e.message, "err");
+  }
+}
+
+async function checkHealth() {
+  try {
+    const r = await fetch("/health").then((x) => x.json());
+    const ok = r.status === "ok";
+    $("dot").className = "dot " + (ok ? "ok" : "ng");
+    $("status").textContent = ok ? `エンジン v${r.engine}・待ち ${r.queue} 件` : "エンジンに接続できません";
+    return ok;
+  } catch {
+    $("dot").className = "dot ng"; $("status").textContent = "サーバーに接続できません";
+    return false;
+  }
+}
+
+async function init() {
+  if (!(await checkHealth())) { setTimeout(init, 3000); return; }
+  try {
+    const [sp, st] = await Promise.all([api("GET", "/speakers"), api("GET", "/settings")]);
+    speakers = sp; limits = st.limits; saved = st.settings;
+    fillCharacters(); buildSliders(); applyToForm(saved); markDirty();
+  } catch (e) {
+    setMsg($("saveMsg"), "読み込めませんでした: " + e.message, "err");
+  }
+}
+
+$("character").addEventListener("change", () => { fillStyles(); markDirty(); });
+$("style").addEventListener("change", markDirty);
+$("speakBtn").addEventListener("click", speak);
+$("text").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) speak(); });
+$("saveBtn").addEventListener("click", save);
+$("resetBtn").addEventListener("click", reset);
+$("tokenBtn").addEventListener("click", () => {
+  try { localStorage.setItem("vv_token", $("token").value); } catch {}
+  $("auth").style.display = "none"; init();
+});
+setInterval(checkHealth, 10000);
+init();
+</script>
+</body>
+</html>

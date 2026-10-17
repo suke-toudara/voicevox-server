@@ -8,6 +8,7 @@ RUN head -c 256 /dev/zero > /etc/pulse-cookie && chmod 444 /etc/pulse-cookie
 
 WORKDIR /app
 COPY server.py .
+COPY static/ static/
 
 ENV VV_PLAYER=paplay \
     PULSE_COOKIE=/etc/pulse-cookie \

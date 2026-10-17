@@ -18,6 +18,7 @@ services:
     # Same uid as the host user so the audio socket is accessible
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
+      - ./data:/app/data  # settings saved from the UI / PUT /settings
       - ${XDG_RUNTIME_DIR:-/run/user/1000}/pulse/native:/run/pulse/native
     ports:
       - "${VV_PORT:-8080}:8080"

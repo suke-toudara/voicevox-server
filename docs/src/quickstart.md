@@ -37,6 +37,8 @@ curl -X POST http://localhost:8080/speak \
 
 スピーカーから声が聞こえれば成功です。別の PC から呼ぶときは `localhost` をこのマシンの IP アドレスに変えます。
 
+ブラウザで `http://localhost:8080/` を開くと、声や設定を変えられる [Web 画面](ui.md) が使えます。
+
 ## 4. 止める
 
 ```bash

@@ -1,14 +1,20 @@
 # 設定
 
-設定は `.env` ファイルに書きます。見本は `.env.example` です。`.env` が無ければ、すべて既定値で動きます。
+設定は 2 種類あります。
+
+- **いつもの設定**（声・速さなど）: [Web 画面](ui.md) か [`PUT /settings`](api.md#put-settings) で変えます。`data/settings.json` に保存されます
+- **起動時の設定**（ポートなど）: `.env` ファイルに書きます。見本は `.env.example` です。`.env` が無ければ、すべて既定値で動きます
+
+## .env に書ける項目
 
 | 変数 | 既定値 | 内容 |
 |---|---|---|
 | `VV_TOKEN` | （空 = 認証なし） | 合言葉。設定すると `Authorization` ヘッダが必要になる（[認証](api.md#認証オプション)） |
 | `VV_PORT` | `8080` | 待ち受けポート |
-| `VV_SPEAKER` | `3`（ずんだもん ノーマル） | `speaker` を省略したときの声 |
+| `VV_SPEAKER` | `3`（ずんだもん ノーマル） | いつもの声の初期値。番号か名前（`四国めたん/あまあま` など） |
 | `VV_PLAYER` | `pw-play`（Docker では `paplay`） | 再生コマンド |
-| `VV_WAIT_TIMEOUT` | `300` | 読み上げの終わりを待つ最大秒数。超えると `504` を返す |
+| `VV_WAIT_TIMEOUT` | `300` | 待ち時間の上限の初期値（秒）。超えると `504` を返す |
+| `VV_SETTINGS_FILE` | `data/settings.json` | いつもの設定の保存先 |
 | `VV_HOST` | `0.0.0.0` | 待ち受けアドレス |
 | `VV_ENGINE` | `http://127.0.0.1:50021` | VOICEVOX エンジンの URL |
 | `VV_ENGINE_IMAGE` | `voicevox/voicevox_engine:cpu-latest` | エンジンの Docker イメージ |
