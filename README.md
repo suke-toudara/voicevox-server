@@ -94,12 +94,16 @@ curl -X POST http://localhost:8080/speak \
 
 ### 起動時の設定（.env）
 
-`.env.example` を `.env` にコピーして、必要な行だけ書く（`.env` が無くても動く）。書いたら起動し直す。
+リポジトリの直下に `.env` を作って、必要な行だけ書く（`.env` が無くても動く）。書いたら起動し直す。
 
 ```bash
-cp .env.example .env
-# .env を編集してから
-docker compose up -d
+# .env の例
+VV_PORT=9000
+VV_SPEAKER=四国めたん
+```
+
+```bash
+docker compose up -d   # 起動し直すと反映される
 ```
 
 | 変数 | 初期値 | 内容 |
