@@ -12,15 +12,12 @@ services:
         required: false
     environment:
       VV_ENGINE: http://voicevox:50021
-      VV_PORT: "8443"  # inside the container; the host port is set under ports
-      VV_CERT: /app/certs/server.crt
-      VV_KEY: /app/certs/server.key
+      VV_PORT: "8080"  # inside the container; the host port is set under ports
       # Play through the host's PipeWire/PulseAudio socket
       PULSE_SERVER: unix:/run/pulse/native
     # Same uid as the host user so the audio socket is accessible
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
-      - ./certs:/app/certs:ro
       - ${XDG_RUNTIME_DIR:-/run/user/1000}/pulse/native:/run/pulse/native
     ports:
-      - "${VV_PORT:-8443}:8443"
+      - "${VV_PORT:-8080}:8080"

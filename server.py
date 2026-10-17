@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""VOICEVOX HTTPS wrapper: receive text over HTTPS and speak it on this machine's speaker."""
+"""VOICEVOX HTTP wrapper: receive text over HTTP and speak it on this machine's speaker."""
 import hmac
 import json
 import os
 import queue
-import ssl
 import subprocess
 import tempfile
 import threading
@@ -12,13 +11,10 @@ import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENGINE = os.environ.get("VV_ENGINE", "http://127.0.0.1:50021")
 HOST = os.environ.get("VV_HOST", "0.0.0.0")
-PORT = int(os.environ.get("VV_PORT", "8443"))
+PORT = int(os.environ.get("VV_PORT", "8080"))
 TOKEN = os.environ.get("VV_TOKEN", "")
-CERT = os.environ.get("VV_CERT", os.path.join(BASE_DIR, "certs", "server.crt"))
-KEY = os.environ.get("VV_KEY", os.path.join(BASE_DIR, "certs", "server.key"))
 DEFAULT_SPEAKER = int(os.environ.get("VV_SPEAKER", "3"))  # 3 = ずんだもん(ノーマル)
 PLAYER = os.environ.get("VV_PLAYER", "pw-play").split()
 MAX_TEXT = 1000
@@ -164,13 +160,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     threading.Thread(target=worker, daemon=True).start()
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
-    scheme = "http"
-    if os.path.exists(CERT) and os.path.exists(KEY):
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(CERT, KEY)
-        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
-        scheme = "https"
-    print(f"listening on {scheme}://{HOST}:{PORT} (engine={ENGINE}, auth={'on' if TOKEN else 'off'})", flush=True)
+    print(f"listening on http://{HOST}:{PORT} (engine={ENGINE}, auth={'on' if TOKEN else 'off'})", flush=True)
     httpd.serve_forever()
 
 

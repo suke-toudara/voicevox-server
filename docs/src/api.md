@@ -1,6 +1,6 @@
 # API リファレンス
 
-ベース URL: `https://<host>:8443`
+ベース URL: `http://<host>:8080`
 
 | メソッド | パス | 内容 |
 |---|---|---|
@@ -21,8 +21,10 @@ VV_TOKEN=好きな合言葉
 
 設定すると、`/speak` と `/speakers` を呼ぶときに `Authorization` ヘッダが必要になります（`/health` は不要のまま）。
 
+> 通信は HTTP（暗号化なし）なので、同じネットワークで通信をのぞける人には合言葉も見えます。「うっかり鳴らされない」程度の目的で使ってください。
+
 ```bash
-curl -k -X POST https://localhost:8443/speak \
+curl -X POST http://localhost:8080/speak \
   -H "Authorization: Bearer 好きな合言葉" \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは"}'
@@ -53,7 +55,7 @@ curl -k -X POST https://localhost:8443/speak \
 **JSON（おすすめ）**
 
 ```bash
-curl -k -X POST https://localhost:8443/speak \
+curl -X POST http://localhost:8080/speak \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは","speaker":3,"speed":1.2}'
 ```
@@ -61,14 +63,14 @@ curl -k -X POST https://localhost:8443/speak \
 **フォーム**
 
 ```bash
-curl -k -X POST https://localhost:8443/speak \
+curl -X POST http://localhost:8080/speak \
   --data-urlencode "text=こんにちは" -d "speaker=3"
 ```
 
 **テキストそのまま**
 
 ```bash
-curl -k -X POST https://localhost:8443/speak \
+curl -X POST http://localhost:8080/speak \
   -H "Content-Type: text/plain" \
   --data-binary "こんにちは"
 ```
@@ -104,7 +106,7 @@ curl -k -X POST https://localhost:8443/speak \
 ## GET /speakers
 
 ```bash
-curl -k https://localhost:8443/speakers
+curl http://localhost:8080/speakers
 ```
 
 ```json
@@ -119,7 +121,7 @@ curl -k https://localhost:8443/speakers
 ## GET /health
 
 ```bash
-curl -k https://localhost:8443/health
+curl http://localhost:8080/health
 ```
 
 | ステータス | 本文の例 |

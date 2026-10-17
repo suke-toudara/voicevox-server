@@ -6,7 +6,6 @@
 
 - Docker と Docker Compose
 - Linux デスクトップ（PipeWire または PulseAudio で音が出ていること）
-- `openssl`（証明書を作るのに使います）
 
 ## 1. 取ってくる
 
@@ -15,15 +14,7 @@ git clone https://github.com/suke-toudara/voicevox-https-wrapper.git
 cd voicevox-https-wrapper
 ```
 
-## 2. 証明書を作る
-
-```bash
-./gen-cert.sh
-```
-
-`certs/` フォルダに、このマシンの名前と IP アドレスが入った自己署名証明書ができます。証明書について詳しくは [HTTPS と証明書](https.md) を見てください。
-
-## 3. 起動する
+## 2. 起動する
 
 ```bash
 docker compose up -d --build
@@ -32,21 +23,21 @@ docker compose up -d --build
 初回はイメージのダウンロードがあるので少し時間がかかります。起動できたか確認します。
 
 ```bash
-curl -k https://localhost:8443/health
+curl http://localhost:8080/health
 # {"status": "ok", "engine": "0.25.2", "queue": 0}
 ```
 
-## 4. しゃべらせる
+## 3. しゃべらせる
 
 ```bash
-curl -k -X POST https://localhost:8443/speak \
+curl -X POST http://localhost:8080/speak \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは"}'
 ```
 
 スピーカーから声が聞こえれば成功です。別の PC から呼ぶときは `localhost` をこのマシンの IP アドレスに変えます。
 
-## 5. 止める
+## 4. 止める
 
 ```bash
 docker compose down

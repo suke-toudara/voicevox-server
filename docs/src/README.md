@@ -1,9 +1,9 @@
 # はじめに
 
-**voicevox-https-wrapper** は、HTTPS で送られてきたテキストを、サーバーを動かしているマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) の声で読み上げるラッパーです。
+**voicevox-https-wrapper** は、HTTP で送られてきたテキストを、サーバーを動かしているマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) の声で読み上げるラッパーです。
 
 ```bash
-curl -k -X POST https://<host>:8443/speak \
+curl -X POST http://<host>:8080/speak \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは"}'
 ```
@@ -13,7 +13,7 @@ curl -k -X POST https://<host>:8443/speak \
 ## しくみ
 
 ```text
-クライアント ──HTTPS(8443)──▶ wrapper ──▶ VOICEVOX エンジン
+クライアント ──HTTP(8080)──▶ wrapper ──▶ VOICEVOX エンジン
                                               │
                                               └──▶ PipeWire / PulseAudio ──▶ スピーカー
 ```

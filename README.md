@@ -1,23 +1,22 @@
 # voicevox-https-wrapper
 
-HTTPS でテキストを受け取り、このマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) でしゃべらせるラッパー。
+HTTP でテキストを受け取り、このマシンのスピーカーから [VOICEVOX](https://voicevox.hiroshiba.jp/) でしゃべらせるラッパー。
 
 📖 **ドキュメント: https://suke-toudara.github.io/voicevox-https-wrapper/**
 
 ```
-クライアント ──HTTPS(8443)──▶ wrapper ──▶ VOICEVOX エンジン
+クライアント ──HTTP(8080)──▶ wrapper ──▶ VOICEVOX エンジン
                                               └──▶ PipeWire / PulseAudio ──▶ スピーカー
 ```
 
 ## クイックスタート
 
 ```bash
-./gen-cert.sh                   # 自己署名証明書を作る
 docker compose up -d --build    # エンジンと wrapper を起動
 ```
 
 ```bash
-curl -k -X POST https://localhost:8443/speak \
+curl -X POST http://localhost:8080/speak \
   -H "Content-Type: application/json" \
   -d '{"text":"こんにちは"}'
 ```

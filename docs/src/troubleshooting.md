@@ -46,14 +46,10 @@ docker compose logs voicevox
 
 ## 別の PC からつながらない
 
-- `curl -k https://<IP>:8443/health` が返るか確認します
-- ファイアウォールでポートを開けます（ufw の場合: `sudo ufw allow 8443/tcp`）
+- `curl http://<IP>:8080/health` が返るか確認します
+- ファイアウォールでポートを開けます（ufw の場合: `sudo ufw allow 8080/tcp`）
 - 同じネットワークにいるか確認します
-
-## curl: (60) SSL certificate problem
-
-自己署名証明書を使っているときに出ます。`-k` を付けるか、`--cacert server.crt` で証明書を渡してください。詳しくは [簡易：自己署名証明書](https-self-signed.md) を見てください。
 
 ## curl: (35) / wrong version number
 
-HTTPS で HTTP のサーバーにつないでいます。`certs/server.crt` と `certs/server.key` が無いと、wrapper は HTTP で起動します。`./gen-cert.sh` で証明書を作ってから起動し直してください。
+`https://` でつないでいます。この wrapper は HTTP なので、`http://` に変えてください。

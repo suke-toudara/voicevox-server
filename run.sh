@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
-# Start VOICEVOX engine (docker) + HTTPS wrapper in the foreground. Ctrl+C stops both.
+# Start VOICEVOX engine (docker) + HTTP wrapper in the foreground. Ctrl+C stops both.
 set -euo pipefail
 cd "$(dirname "$0")"
 
 ENGINE_IMAGE="${VV_ENGINE_IMAGE:-voicevox/voicevox_engine:cpu-latest}"
 CONTAINER=voicevox-engine
-
-[ -f certs/server.crt ] || ./gen-cert.sh
 
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
 

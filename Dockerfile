@@ -12,5 +12,5 @@ COPY server.py .
 ENV VV_PLAYER=paplay \
     PULSE_COOKIE=/etc/pulse-cookie \
     PYTHONUNBUFFERED=1
-EXPOSE 8443
+EXPOSE 8080
 CMD ["python3", "server.py"]
