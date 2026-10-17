@@ -26,14 +26,14 @@ VOICE_PARAMS = {
     "pitch": ("pitchScale", -0.15, 0.15, 0.01, 0.0, "高さ"),
     "intonation": ("intonationScale", 0.0, 2.0, 0.01, 1.0, "抑揚"),
     "volume": ("volumeScale", 0.0, 2.0, 0.01, 1.0, "音量"),
-    "pre_silence": ("prePhonemeLength", 0.0, 1.5, 0.01, 0.1, "文の前の無音（秒）"),
-    "post_silence": ("postPhonemeLength", 0.0, 1.5, 0.01, 0.1, "文の後の無音（秒）"),
-    "pause": ("pauseLengthScale", 0.0, 2.0, 0.01, 1.0, "句読点の間"),
+    "pre_silence": ("prePhonemeLength", 0.0, 1.5, 0.01, 0.1, "開始前の無音（秒）"),
+    "post_silence": ("postPhonemeLength", 0.0, 1.5, 0.01, 0.1, "終了後の無音（秒）"),
+    "pause": ("pauseLengthScale", 0.0, 2.0, 0.01, 1.0, "句読点の長さ"),
 }
 # Behaviour settings: name -> (min, max, default, label)
 BEHAVIOUR_PARAMS = {
     "wait_timeout": (1, 3600, int(os.environ.get("VV_WAIT_TIMEOUT", "300")), "待ち時間の上限（秒）"),
-    "max_text": (1, 10000, 1000, "1 回に送れる文字数"),
+    "max_text": (1, 10000, 1000, "最大文字数"),
 }
 DEFAULT_SPEAKER = os.environ.get("VV_SPEAKER", "3")  # id or "名前[/話し方]"; 3 = ずんだもん/ノーマル
 

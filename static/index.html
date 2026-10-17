@@ -85,11 +85,11 @@
   </section>
 
   <section class="card">
-    <h2>しゃべらせる</h2>
-    <textarea id="text" placeholder="しゃべらせたい文を入力（Ctrl + Enter でも送れます）">こんにちは。今日もよろしくお願いします。</textarea>
+    <h2>読み上げ</h2>
+    <textarea id="text" placeholder="読み上げる文章を入力（Ctrl+Enterでも読み上げます）">こんにちは。今日もよろしくお願いします。</textarea>
     <div class="row" style="margin-top:10px">
-      <button class="primary" id="speakBtn">しゃべらせる</button>
-      <span class="hint">下の声と調整（保存前でも）で読み上げます</span>
+      <button class="primary" id="speakBtn">読み上げる</button>
+      <span class="hint">下で選んだ声で読み上げます。保存しなくても反映されます</span>
     </div>
     <div class="msg" id="speakMsg"></div>
   </section>
@@ -108,7 +108,7 @@
   </section>
 
   <section class="card">
-    <h2>動作</h2>
+    <h2>その他</h2>
     <div class="grid2" id="behaviour"></div>
   </section>
 
@@ -176,7 +176,7 @@ function buildSliders() {
       <span class="name">${l.label}</span>
       <input type="range" id="r_${k}" min="${l.min}" max="${l.max}" step="${l.step}">
       <output id="o_${k}"></output>
-      <button class="link" data-reset="${k}" title="初期値 ${l.default}">戻す</button>
+      <button class="link" data-reset="${k}" title="初期値 ${l.default}">初期値</button>
     </div>`;
   }).join("");
   for (const k of VOICE_KEYS) {
@@ -217,14 +217,14 @@ function readForm() {
 function markDirty() {
   const now = readForm();
   const changed = Object.keys(now).some((k) => Math.abs(now[k] - saved[k]) > 1e-9);
-  $("dirty").textContent = changed ? "● 保存していない変更があります" : "";
+  $("dirty").textContent = changed ? "● 未保存の変更があります" : "";
 }
 
 // ---------- actions ----------
 
 async function speak() {
   const text = $("text").value.trim();
-  if (!text) return setMsg($("speakMsg"), "文を入力してください", "err");
+  if (!text) return setMsg($("speakMsg"), "文章を入力してください", "err");
   const f = readForm();
   const body = { text, speaker: f.speaker };
   for (const k of VOICE_KEYS) body[k] = f[k];
@@ -234,7 +234,7 @@ async function speak() {
     const r = await api("POST", "/speak", body);
     setMsg($("speakMsg"), `読み上げました（${r.voice}）`, "ok");
   } catch (e) {
-    setMsg($("speakMsg"), "失敗: " + e.message, "err");
+    setMsg($("speakMsg"), "読み上げられませんでした: " + e.message, "err");
   } finally {
     $("speakBtn").disabled = false;
   }
@@ -244,7 +244,7 @@ async function save() {
   try {
     const r = await api("PUT", "/settings", readForm());
     saved = r.settings; markDirty();
-    setMsg($("saveMsg"), `保存しました（いつもの声: ${r.voice}）`, "ok");
+    setMsg($("saveMsg"), "保存しました", "ok");
   } catch (e) {
     setMsg($("saveMsg"), "保存できませんでした: " + e.message, "err");
   }
@@ -266,7 +266,7 @@ async function checkHealth() {
     const r = await fetch("/health").then((x) => x.json());
     const ok = r.status === "ok";
     $("dot").className = "dot " + (ok ? "ok" : "ng");
-    $("status").textContent = ok ? `エンジン v${r.engine}・待ち ${r.queue} 件` : "エンジンに接続できません";
+    $("status").textContent = ok ? `接続中（VOICEVOX v${r.engine}）・順番待ち ${r.queue}件` : "VOICEVOXに接続できません";
     return ok;
   } catch {
     $("dot").className = "dot ng"; $("status").textContent = "サーバーに接続できません";
