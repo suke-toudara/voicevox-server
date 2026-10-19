@@ -4,9 +4,11 @@ import hmac
 import json
 import os
 import queue
+import re
 import subprocess
 import tempfile
 import threading
+import time
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -36,6 +38,10 @@ BEHAVIOUR_PARAMS = {
     "max_text": (1, 10000, 1000, "最大文字数"),
 }
 DEFAULT_SPEAKER = os.environ.get("VV_SPEAKER", "3")  # id or "名前[/話し方]"; 3 = ずんだもん/ノーマル
+
+SENTENCE_RE = re.compile(r"[^。！？!?\n]+[。！？!?]*[」』）)]*")
+SENTENCE_GAP = 0.3  # silence between sentences (s), scaled by the "pause" setting
+SYNTH_MARGIN = 1.2  # safety factor on the synthesis-time estimate
 
 jobs: "queue.Queue[dict]" = queue.Queue(maxsize=50)
 settings_lock = threading.Lock()
@@ -175,11 +181,86 @@ def settings_view():
 
 # ---------- playback ----------
 
-def synthesize(job):
-    query = json.loads(engine_request("/audio_query", {"text": job["text"], "speaker": job["speaker"]}))
+def make_query(job, text, first=True, last=True):
+    query = json.loads(engine_request("/audio_query", {"text": text, "speaker": job["speaker"]}))
     for k, (field, *_rest) in VOICE_PARAMS.items():
         query[field] = job[k]
-    return engine_request("/synthesis", {"speaker": job["speaker"]}, query)
+    # Between sentences, leave about the pause the engine itself puts at 。
+    # (restarting the player adds roughly another 0.1 s)
+    if not first:
+        query["prePhonemeLength"] = 0.0
+    if not last:
+        query["postPhonemeLength"] = SENTENCE_GAP * job["pause"]
+    return query
+
+
+def query_duration(query):
+    """Length in seconds of the audio a query will produce (cheap: no synthesis)."""
+    t = 0.0
+    for phrase in query["accent_phrases"]:
+        for mora in phrase["moras"]:
+            t += (mora.get("consonant_length") or 0.0) + mora["vowel_length"]
+        if phrase.get("pause_mora"):
+            t += phrase["pause_mora"]["vowel_length"] * query["pauseLengthScale"]
+    return t / query["speedScale"] + query["prePhonemeLength"] + query["postPhonemeLength"]
+
+
+def split_sentences(text):
+    """Split at 。！？!? and newlines (keeping closing brackets) so speech can start early."""
+    parts = [p.strip() for p in SENTENCE_RE.findall(text)]
+    return [p for p in parts if p] or [text]
+
+
+def play(wav):
+    with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+        f.write(wav)
+        f.flush()
+        rc = subprocess.run(PLAYER + [f.name], check=False).returncode
+    if rc != 0:
+        raise RuntimeError(f"{PLAYER[0]} exited with {rc}")
+
+
+def speak(job):
+    """Synthesize sentence by sentence and start playing as soon as it can run without stalls.
+
+    Synthesis can be slower than real time on a weak CPU, so playback starts only once
+    the audio already made outlasts the estimated time to synthesize the rest.
+    """
+    sentences = split_sentences(job["text"])
+    n = len(sentences)
+    queries = [make_query(job, s, i == 0, i == n - 1) for i, s in enumerate(sentences)]
+    durations = [query_duration(q) for q in queries]
+    ready = queue.Queue()
+
+    def produce():
+        for q in queries:
+            start = time.monotonic()
+            try:
+                wav = engine_request("/synthesis", {"speaker": job["speaker"]}, q)
+            except Exception as e:
+                ready.put(e)
+                return
+            ready.put((wav, time.monotonic() - start))
+
+    def next_wav():
+        item = ready.get()
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    threading.Thread(target=produce, daemon=True).start()
+    buffered, rate = [], 0.0
+    while len(buffered) < n:
+        wav, took = next_wav()
+        i = len(buffered)
+        buffered.append(wav)
+        rate = max(rate, took / max(durations[i], 0.1))  # synthesis seconds per audio second
+        if sum(durations[:i + 1]) >= rate * sum(durations[i + 1:]) * SYNTH_MARGIN:
+            break
+    for wav in buffered:
+        play(wav)
+    for _ in range(n - len(buffered)):
+        play(next_wav()[0])
 
 
 def worker():
@@ -187,13 +268,7 @@ def worker():
         task = jobs.get()
         job = task["job"]
         try:
-            wav = synthesize(job)
-            with tempfile.NamedTemporaryFile(suffix=".wav") as f:
-                f.write(wav)
-                f.flush()
-                rc = subprocess.run(PLAYER + [f.name], check=False).returncode
-            if rc != 0:
-                raise RuntimeError(f"{PLAYER[0]} exited with {rc}")
+            speak(job)
         except Exception as e:  # keep the worker alive whatever happens
             task["error"] = str(e)
             print(f"[error] {e!r} text={job['text'][:40]!r}", flush=True)
